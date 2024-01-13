@@ -5,9 +5,12 @@ import net.minecraftforge.common.config.Config;
 import static com.unsoldriceball.petsretreat.RetreatMain.MOD_ID;
 
 
+
+
 @SuppressWarnings("unused")
 @Config(modid = MOD_ID)
-final public class RetreatConfig {
+final public class RetreatConfig
+{
     @Config.RequiresMcRestart
     @Config.Comment("If set to false, this mod will not work.")
     public static boolean C_DO_INIT = true;
@@ -36,7 +39,8 @@ final public class RetreatConfig {
             "%victim% has retreated your spawn point. (Because owner offline.)");
 
 
-    private static class category_system {
+    private static class category_system
+    {
         @Config.Comment("If set to false, this mod will not spawn particle when entities retreat.")
         public boolean C_DO_PLAYPARTICLE;
         @Config.Comment("If set to false, this mod will not play sound when entities retreat.")
@@ -58,7 +62,8 @@ final public class RetreatConfig {
         @Config.Comment("When entities retreat, they will spawn at theirs respawn point with the added this value to the Y coordinate.")
         public double C_SPAWN_HEIGHT;
 
-        public category_system(boolean c_DO_PLAYPARTICLE, boolean c_DO_PLAYSOUND, boolean c_DO_APPLYPOTION, boolean c_DO_APPLYRETREATPOTION, int c_UPDATECANCEL_DISTANCE, Double c_HEALING_PERCENTAGE, double c_SPAWN_HEIGHT) {
+        public category_system(boolean c_DO_PLAYPARTICLE, boolean c_DO_PLAYSOUND, boolean c_DO_APPLYPOTION, boolean c_DO_APPLYRETREATPOTION, int c_UPDATECANCEL_DISTANCE, Double c_HEALING_PERCENTAGE, double c_SPAWN_HEIGHT)
+        {
             C_DO_PLAYPARTICLE = c_DO_PLAYPARTICLE;
             C_DO_PLAYSOUND = c_DO_PLAYSOUND;
             C_DO_APPLYPOTION = c_DO_APPLYPOTION;
@@ -68,7 +73,8 @@ final public class RetreatConfig {
             C_SPAWN_HEIGHT = c_SPAWN_HEIGHT;
         }
     }
-    private static class category_item {
+    private static class category_item
+    {
         @Config.Comment("If set to false, entities that have applied the Totem of Retreat will not take any damage from their owner and his pets.")
         public boolean C_TOTEM_FRIENDLYFIRE;
         @Config.RequiresMcRestart
@@ -83,7 +89,8 @@ final public class RetreatConfig {
         @Config.Comment("Tooltip for Totem of Retreat.")
         public String C_TOTEM_TOOLTIP;
 
-        public category_item(boolean c_TOTEM_FRIENDLYFIRE, boolean c_TOTEM_ONETIME, boolean c_TOTEM_HARDRECIPE, boolean c_TOTEM_HARDRECIPE_REGENERATION, String c_TOTEM_TOOLTIP) {
+        public category_item(boolean c_TOTEM_FRIENDLYFIRE, boolean c_TOTEM_ONETIME, boolean c_TOTEM_HARDRECIPE, boolean c_TOTEM_HARDRECIPE_REGENERATION, String c_TOTEM_TOOLTIP)
+        {
             C_TOTEM_FRIENDLYFIRE = c_TOTEM_FRIENDLYFIRE;
             C_TOTEM_ONETIME = c_TOTEM_ONETIME;
             C_TOTEM_HARDRECIPE = c_TOTEM_HARDRECIPE;
@@ -91,7 +98,8 @@ final public class RetreatConfig {
             C_TOTEM_TOOLTIP = c_TOTEM_TOOLTIP;
         }
     }
-    private static class category_message {
+    private static class category_message
+    {
         @Config.Comment("The message sent to the player who applied the Totem of Retreat to the entity.(You can use %target%.)")
         public String C_MESSAGE_TOTEM_APPLY;
         @Config.Comment("The message sent to the player who revoked the Totem of Retreat from the entity.(You can use %target%.)")
@@ -103,7 +111,8 @@ final public class RetreatConfig {
         @Config.Comment("The message that is sent to a random player when the owner of the retreated entity is offline.(You can use %victim% and %attacker%.)")
         public String C_MESSAGE_RETREATED_OFFLINE;
 
-        public category_message(String c_MESSAGE_TOTEM_APPLY, String c_MESSAGE_TOTEM_REVOKE, String c_MESSAGE_TOTEM_FAILED, String c_MESSAGE_RETREATED, String c_MESSAGE_RETREATED_OFFLINE) {
+        public category_message(String c_MESSAGE_TOTEM_APPLY, String c_MESSAGE_TOTEM_REVOKE, String c_MESSAGE_TOTEM_FAILED, String c_MESSAGE_RETREATED, String c_MESSAGE_RETREATED_OFFLINE)
+        {
             C_MESSAGE_TOTEM_APPLY = c_MESSAGE_TOTEM_APPLY;
             C_MESSAGE_TOTEM_REVOKE = c_MESSAGE_TOTEM_REVOKE;
             C_MESSAGE_TOTEM_FAILED = c_MESSAGE_TOTEM_FAILED;

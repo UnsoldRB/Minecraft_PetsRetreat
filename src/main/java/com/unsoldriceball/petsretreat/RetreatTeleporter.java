@@ -11,8 +11,10 @@ import static com.unsoldriceball.petsretreat.RetreatMain.resetEntityStatus;
 import static com.unsoldriceball.petsretreat.RetreatUtils.randomVec;
 
 
-public class RetreatTeleporter implements ITeleporter {
 
+
+public class RetreatTeleporter implements ITeleporter
+{
     private static int lx;
     private static int ly;
     private static int lz;
@@ -20,8 +22,12 @@ public class RetreatTeleporter implements ITeleporter {
     private static int duration_Potion;
     private static Potion potionEffect;
 
-    public RetreatTeleporter(int i_lx, int i_ly, int i_lz, boolean i_do_Potion, int i_duration_Potion, Potion i_potionEffect) {
-        //撤退に伴ってdimentionの移動が生じた場合に呼び出される
+
+
+
+    //撤退に伴ってdimentionの移動が生じた場合に呼び出される
+    public RetreatTeleporter(int i_lx, int i_ly, int i_lz, boolean i_do_Potion, int i_duration_Potion, Potion i_potionEffect)
+    {
         lx = i_lx;
         ly = i_ly;
         lz = i_lz;
@@ -29,23 +35,31 @@ public class RetreatTeleporter implements ITeleporter {
         duration_Potion = i_duration_Potion;
         potionEffect = i_potionEffect;
     }
+
+
+
+    //dimentionの移動処理が完了した場合に呼び出される。
     @Override
-    public void placeEntity(World world, Entity entity, float yaw) {
-        //dimentionの移動処理が完了した場合に呼び出される。
+    public void placeEntity(World world, Entity entity, float yaw)
+    {
         if (world.isRemote) return;
         if (!(entity instanceof EntityLivingBase)) return;
-        final EntityLivingBase ENTITY = (EntityLivingBase) entity;
 
-        ENTITY.setPosition(lx, ly, lz);
-        ENTITY.motionX = randomVec(1);
-        ENTITY.motionY = 0.5;
-        ENTITY.motionZ = randomVec(2);
-        if (do_Potion) {
-            ENTITY.addPotionEffect(new PotionEffect(potionEffect, duration_Potion, 1));
+        final EntityLivingBase L_ENTITY = (EntityLivingBase) entity;
+
+        L_ENTITY.setPosition(lx, ly, lz);
+        L_ENTITY.motionX = randomVec(1);
+        L_ENTITY.motionY = 0.5;
+        L_ENTITY.motionZ = randomVec(2);
+
+        if (do_Potion)
+        {
+            L_ENTITY.addPotionEffect(new PotionEffect(potionEffect, duration_Potion, 1));
         }
-        else {
+        else
+        {
             //LivingUpdateを停止しない場合はこの時点でEntityを初期化する。
-            resetEntityStatus(ENTITY);
+            resetEntityStatus(L_ENTITY);
         }
     }
 }

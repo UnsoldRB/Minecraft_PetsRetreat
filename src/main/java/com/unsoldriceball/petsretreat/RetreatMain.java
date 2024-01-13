@@ -47,14 +47,18 @@ import static com.unsoldriceball.petsretreat.RetreatItem.HARD_TAG;
 import static com.unsoldriceball.petsretreat.RetreatUtils.*;
 
 
+
+
 @Mod(modid = RetreatMain.MOD_ID, acceptableRemoteVersions = "*")
-public class RetreatMain {
+public class RetreatMain
+{
     public static final String MOD_ID = "petsretreat";
+
     private Configuration cfg;
     private boolean cfg_isInit = true;
-    public static RetreatItem retreatItem;
-    public static RetreatItem retreatItem_hard;
-    public static Potion retreatPotion;
+    public static RetreatItem f_retreatItem;
+    public static RetreatItem f_retreatItem_hard;
+    public static Potion f_retreatPotion;
     private boolean DO_INIT;
     private boolean DO_PLAYSOUND;
     private boolean DO_PLAYPARTICLE;
@@ -76,10 +80,13 @@ public class RetreatMain {
 
 
 
-    //Mod起動時の関数
+
+    //ModがInitializeを呼び出す前に発生するイベント。
     @Mod.EventHandler
-    public void preInit(FMLPreInitializationEvent event){ //ModがInitializeを呼び出す前に発生するイベント。
-        MinecraftForge.EVENT_BUS.register(this); //これでこのクラス内でForgeのイベントが動作するようになるらしい。
+    public void preInit(FMLPreInitializationEvent event)
+    {
+        //これでこのクラス内でForgeのイベントが動作するようになるらしい。
+        MinecraftForge.EVENT_BUS.register(this);
 
         //Configを起動
         cfg = new Configuration(event.getSuggestedConfigurationFile());
@@ -87,47 +94,59 @@ public class RetreatMain {
         cfg_isInit = false;
         //---
 
-        if (!DO_INIT) return; //そもそも起動させるのか。(Debug用)
+        //そもそも起動させるのか。(Debug用)
+        if (DO_INIT)
+        {
+            //撤退対象を設定するアイテムを登録
+            f_retreatItem = new RetreatItem(false);
+            f_retreatItem_hard = new RetreatItem(true);
+            ForgeRegistries.ITEMS.registerAll(f_retreatItem, f_retreatItem_hard);
+            //---
 
-        //撤退対象を設定するアイテムを登録
-        retreatItem = new RetreatItem(false);
-        retreatItem_hard = new RetreatItem(true);
-        ForgeRegistries.ITEMS.registerAll(retreatItem, retreatItem_hard);
-        //---
+            //アイテムのレシピをconfigに基づいて登録
+            final RetreatItem L_R_RESULT;
+            final Ingredient L_R_AIR = Ingredient.fromItem(Items.AIR);
+            final Ingredient L_R_DYE1 = Ingredient.fromStacks(new ItemStack(Items.DYE, 1, 5));
+            final Ingredient L_R_DYE2 = Ingredient.fromStacks(new ItemStack(Items.DYE, 1, 13));
+            final Ingredient L_R_CORE;
 
-        //アイテムのレシピをconfigに基づいて登録
-        final RetreatItem R_RESULT;
-        final Ingredient R_AIR = Ingredient.fromItem(Items.AIR);
-        final Ingredient R_DYE1 = Ingredient.fromStacks(new ItemStack(Items.DYE, 1, 5));
-        final Ingredient R_DYE2 = Ingredient.fromStacks(new ItemStack(Items.DYE, 1, 13));
-        final Ingredient R_CORE;
-        if (TOTEM_HARDRECIPE) {
-            R_RESULT = retreatItem_hard;
-            R_CORE = Ingredient.fromItem(Items.TOTEM_OF_UNDYING);
+            if (TOTEM_HARDRECIPE)
+            {
+                L_R_RESULT = f_retreatItem_hard;
+                L_R_CORE = Ingredient.fromItem(Items.TOTEM_OF_UNDYING);
+            }
+            else
+            {
+                L_R_RESULT = f_retreatItem;
+                L_R_CORE = Ingredient.fromItem(Item.getItemFromBlock(Blocks.GOLD_BLOCK));
+            }
+
+            NonNullList<Ingredient> recipe_input = NonNullList.create();
+            recipe_input.add(L_R_AIR);
+            recipe_input.add(L_R_DYE1);
+            recipe_input.add(L_R_AIR);
+            recipe_input.add(L_R_DYE2);
+            recipe_input.add(L_R_CORE);
+            recipe_input.add(L_R_DYE2);
+            recipe_input.add(L_R_AIR);
+            recipe_input.add(L_R_DYE1);
+            recipe_input.add(L_R_AIR);
+
+            final IRecipe L_RECIPE = new ShapedRecipes(MOD_ID, 3, 3, recipe_input, new ItemStack(L_R_RESULT));
+
+            L_RECIPE.setRegistryName(new ResourceLocation(MOD_ID, L_R_RESULT.f_id_TotemOfRetreat));
+            ForgeRegistries.RECIPES.register(L_RECIPE);
+            //---
+
+            //AI無効化用のポーション効果を登録
+            if (DO_APPLYRETREATPOTION)
+            {
+                final String L_POTION_ID = "RetreatPet.Cancel.LivingUpdate";
+                f_retreatPotion = new RetreatPotionEffect(L_POTION_ID, true, 6580840, 0, 0);
+                ForgeRegistries.POTIONS.register(f_retreatPotion);
+            }
+            //---
         }
-        else {
-            R_RESULT = retreatItem;
-            R_CORE = Ingredient.fromItem(Item.getItemFromBlock(Blocks.GOLD_BLOCK));
-        }
-
-        NonNullList<Ingredient> recipe_input = NonNullList.create();
-        recipe_input.add(R_AIR);        recipe_input.add(R_DYE1);        recipe_input.add(R_AIR);
-        recipe_input.add(R_DYE2);       recipe_input.add(R_CORE);        recipe_input.add(R_DYE2);
-        recipe_input.add(R_AIR);        recipe_input.add(R_DYE1);        recipe_input.add(R_AIR);
-
-
-        final IRecipe RECIPE = new ShapedRecipes(MOD_ID, 3, 3, recipe_input, new ItemStack(R_RESULT));
-        RECIPE.setRegistryName(new ResourceLocation(MOD_ID, R_RESULT.ID_TOTEM_OF_RETREAT));
-        ForgeRegistries.RECIPES.register(RECIPE);
-        //---
-
-        //AI無効化用のポーション効果を登録
-        if (DO_APPLYRETREATPOTION) {
-            final String POTION_ID = "RetreatPet.Cancel.LivingUpdate";
-            retreatPotion = new RetreatPotionEffect(POTION_ID, true, 6580840, 0, 0);
-            ForgeRegistries.POTIONS.register(retreatPotion);
-        }
-        //---
     }
 
 
@@ -135,19 +154,22 @@ public class RetreatMain {
     //アイテムのモデル登録用イベント。
     @SubscribeEvent
     @SideOnly(Side.CLIENT)
-    public void registerModels(ModelRegistryEvent event) {
-        ModelLoader.setCustomModelResourceLocation(retreatItem, 0, new ModelResourceLocation(new ResourceLocation(MOD_ID, retreatItem.ID_TOTEM_OF_RETREAT), "inventory"));
-        ModelLoader.setCustomModelResourceLocation(retreatItem_hard, 0, new ModelResourceLocation(new ResourceLocation(MOD_ID, retreatItem.ID_TOTEM_OF_RETREAT), "inventory"));
+    public void registerModels(ModelRegistryEvent event)
+    {
+        ModelLoader.setCustomModelResourceLocation(f_retreatItem, 0, new ModelResourceLocation(new ResourceLocation(MOD_ID, f_retreatItem.f_id_TotemOfRetreat), "inventory"));
+        ModelLoader.setCustomModelResourceLocation(f_retreatItem_hard, 0, new ModelResourceLocation(new ResourceLocation(MOD_ID, f_retreatItem.f_id_TotemOfRetreat), "inventory"));
     }
 
 
 
     //Config読み込み関数
-    private void loadConfig(){
+    private void loadConfig()
+    {
         cfg.load();
 
         //起動時にのみ読み込むConfig。本来はいつでも再読み込みできるけど、ころころ変更できてしまうとゲームが面白くなくなるものも含まれる。
-        if (cfg_isInit) {
+        if (cfg_isInit)
+        {
             DO_INIT = cfg.get("general", "C_DO_INIT", true).getBoolean();
             DO_APPLYRETREATPOTION = cfg.get("general.system", "C_DO_APPLYRETREATPOTION", true).getBoolean();
             UPDATECANCEL_DISTANCE = cfg.get("general.system", "C_UPDATECANCEL_DISTANCE", 8).getInt();
@@ -172,57 +194,69 @@ public class RetreatMain {
 
 
 
+
     //ゲーム内からConfigを変更したときのイベント
     @SubscribeEvent
-    public void onConfigChanged(ConfigChangedEvent.OnConfigChangedEvent event) {
-        if (!event.getModID().equals(MOD_ID)) return;
-
-        ConfigManager.sync(MOD_ID, Config.Type.INSTANCE);
-        loadConfig();
+    public void onConfigChanged(ConfigChangedEvent.OnConfigChangedEvent event)
+    {
+        if (event.getModID().equals(MOD_ID))
+        {
+            ConfigManager.sync(MOD_ID, Config.Type.INSTANCE);
+            loadConfig();
+        }
     }
 
 
 
     //Entityが撤退するに値するかを判断する関数(FriendlyFire, Totem適用, 攻撃無効化のトリガーも担う。)
+    //他のダメージイベントだとLittleMaidに対してMPの方のEntityを取得してしまうのでこちらを採用。
     @SubscribeEvent
-    public void onEntityTakeAttack(LivingAttackEvent event) { //他のダメージイベントだとLittleMaidに対してMPの方のEntityを取得してしまうのでこちらを採用。
+    public void onEntityTakeAttack(LivingAttackEvent event)
+    {
         //entityがEntityLivingBaseを継承かつ、イベントがServer側で発生している場合
         if (!(event.getEntity() instanceof EntityLivingBase)) return;
         if (event.getEntityLiving().getEntityWorld().isRemote) return;
 
-        final EntityLivingBase ENTITY = event.getEntityLiving();
+        final EntityLivingBase L_ENTITY = event.getEntityLiving();
+        final Entity L_ATTACKER = event.getSource().getTrueSource();
 
         //retreatPotion効果を受けている場合は攻撃を無効化して終了
-        if (ENTITY.isPotionActive(retreatPotion)) {
+        if (L_ENTITY.isPotionActive(f_retreatPotion))
+        {
             event.setCanceled(true);
             return;
         }
         //---
 
         //ENTITYのTagからUUIDを抜き取る。
-        UUID uuid_Player = null;
-        for(String t : ENTITY.getTags()) {
-            if (!t.contains("@" + MOD_ID)) continue;
-            uuid_Player = UUID.fromString(t.replace("@" + MOD_ID + "_", ""));
+        UUID uuid_player = null;
+
+        for(String _t : L_ENTITY.getTags())
+        {
+            if (!_t.contains("@" + MOD_ID)) continue;
+            uuid_player = UUID.fromString(_t.replace("@" + MOD_ID + "_", ""));
             break;
         }
         //---
 
         //攻撃したのがプレイヤーなら...
-        if (event.getSource().getTrueSource() instanceof EntityPlayer) {
-
-            final EntityPlayer ATTACKER_P = (EntityPlayer) event.getSource().getTrueSource();
-            final ItemStack ATTACKER_I = ATTACKER_P.getHeldItemMainhand();
+        if (L_ATTACKER instanceof EntityPlayer)
+        {
+            final EntityPlayer L_ATTACKER_P = (EntityPlayer) L_ATTACKER;
+            final ItemStack L_ATTACKER_P_ITEM = L_ATTACKER_P.getHeldItemMainhand();
 
             //攻撃したプレイヤーの持っているアイテムがretreatTotemであれば、関数をトリガーして終了。
-            if (ATTACKER_I.getItem() instanceof RetreatItem) {
-                ((RetreatItem) ATTACKER_I.getItem()).TotemInteractionForEntity(ATTACKER_I, ATTACKER_P, ENTITY);
+            if (L_ATTACKER_P_ITEM.getItem() instanceof RetreatItem)
+            {
+                ((RetreatItem) L_ATTACKER_P_ITEM.getItem()).TotemInteractionForEntity(L_ATTACKER_P_ITEM, L_ATTACKER_P, L_ENTITY);
                 event.setCanceled(true);
                 return;
             }
             //FRIENDLYFIRE無効時、攻撃したプレイヤーとEntityの持っているTagのUUIDが一致するなら、フレンドリーファイアを無効化して終了。
-            else if  (!TOTEM_FRIENDLYFIRE) {
-                if (ATTACKER_P.getUniqueID().equals(uuid_Player)) {
+            else if  (!TOTEM_FRIENDLYFIRE)
+            {
+                if (L_ATTACKER_P.getUniqueID().equals(uuid_player))
+                {
                     event.setCanceled(true);
                     return;
                 }
@@ -231,9 +265,11 @@ public class RetreatMain {
         //---
 
         //攻撃したのがEntityLivingBaseなら... (FRIENDLYFIRE無効時)
-        else if (event.getSource().getTrueSource() instanceof EntityLivingBase && (!TOTEM_FRIENDLYFIRE)) {
+        else if (L_ATTACKER instanceof EntityLivingBase && (!TOTEM_FRIENDLYFIRE))
+        {
             //攻撃したEntityのUUIDと攻撃されたEntityの持っているTagのUUIDが一致するなら、フレンドリーファイアを無効化して終了。
-            if (event.getSource().getTrueSource().getTags().contains("@" + MOD_ID + "_" + uuid_Player)) {
+            if (L_ATTACKER.getTags().contains("@" + MOD_ID + "_" + uuid_player))
+            {
                 event.setCanceled(true);
                 return;
             }
@@ -241,55 +277,71 @@ public class RetreatMain {
         //---
 
         //この攻撃で死亡するかどうかの判定
-        if ((ENTITY.getHealth() - event.getAmount()) > 0) return;
+        if ((L_ENTITY.getHealth() - event.getAmount()) > 0) return;
 
-        if (uuid_Player != null) { //手懐けられているのかどうか
+        //手懐けられているのかどうかをこれで判定できる。(ownerの有無)
+        if (uuid_player != null)
+        {
             event.setCanceled(true);
-            retreatEntity(ENTITY, uuid_Player, event.getSource());
+            retreatEntity(L_ENTITY, uuid_player, event.getSource());
         }
     }
 
 
 
     //メイン機能の関数
-    private void retreatEntity(EntityLivingBase entity, UUID ownerUUID, DamageSource damageSource) {
-
-        final World WORLD = entity.getEntityWorld();
-        final Vec3d LOC = getEntityLoc(entity);
+    private void retreatEntity(EntityLivingBase entity, UUID ownerUUID, DamageSource damageSource)
+    {
+        final World L_WORLD = entity.getEntityWorld();
+        final Vec3d L_LOC = getEntityLoc(entity);
 
         // 死亡後、プレイヤーに対する処理
-        EntityPlayer owner = WORLD.getPlayerEntityByUUID(ownerUUID);
+        EntityPlayer owner = L_WORLD.getPlayerEntityByUUID(ownerUUID);
         String message;
 
-        if (owner != null) { //ownerがnullでない(プレイヤーがオンライン)の場合
+        //ownerがnullでない(プレイヤーがオンライン)の場合
+        if (owner != null)
+        {
             message = MESSAGE_RETREATED;
         }
-        else { //ownerがnull(プレイヤーがオフライン)の場合
+        //ownerがnull(プレイヤーがオフライン)の場合
+        else
+        {
             message = MESSAGE_RETREATED_OFFLINE;
 
             //全オンラインプレイヤーの中からランダムで一人選出。
-            PlayerList playerList = FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList();
-            List<EntityPlayerMP> players = playerList.getPlayers();
+            final PlayerList L_PLAYERLIST = FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList();
+            final List<EntityPlayerMP> L_PLAYERS = L_PLAYERLIST.getPlayers();
 
-            if (players.isEmpty()) { //オンラインのプレイヤーが一人もいない状態でペットが死亡した際の処理。(未使用)
+            //オンラインのプレイヤーが一人もいない状態でペットが死亡した際の処理。(未検証)
+            if (L_PLAYERS.isEmpty())
+            {
                 return;
             }
 
             Random random = new Random();
-            int randomIndex = random.nextInt(players.size());
-            owner = players.get(randomIndex);
+            final int L_RANDOMINDEX = random.nextInt(L_PLAYERS.size());
+
+            owner = L_PLAYERS.get(L_RANDOMINDEX);
             //---
         }
 
         //死亡ログ生成
         String attacerName;
-        if (damageSource.getTrueSource() != null) { //大元の攻撃者が存在する場合
+
+        //大元の攻撃者が存在する場合
+        if (damageSource.getTrueSource() != null)
+        {
             attacerName = getName(damageSource.getTrueSource());
         }
-        else if (damageSource.getImmediateSource() != null){ //実際に、直接攻撃したentityが存在する場合
+        //実際に、直接攻撃したentityが存在する場合
+        else if (damageSource.getImmediateSource() != null)
+        {
             attacerName = getName(damageSource.getImmediateSource());
         }
-        else {  //仕方がないのでDamageTypeをAttackerとする
+        //仕方がないのでDamageTypeをAttackerとする
+        else
+        {
             attacerName = damageSource.getDamageType();
         }
 
@@ -302,48 +354,56 @@ public class RetreatMain {
         //---
 
         //演出再生
-        if (DO_PLAYSOUND) {
-            WORLD.playSound(null, LOC.x, LOC.y, LOC.z, SoundEvents.ITEM_TOTEM_USE, SoundCategory.PLAYERS, 0.8f, 1.2f);
+        if (DO_PLAYSOUND)
+        {
+            L_WORLD.playSound(null, L_LOC.x, L_LOC.y, L_LOC.z, SoundEvents.ITEM_TOTEM_USE, SoundCategory.PLAYERS, 0.8f, 1.2f);
         }
-        if (DO_PLAYPARTICLE) {
-            initPlayParticle(owner, LOC, EnumParticleTypes.TOTEM);
+        if (DO_PLAYPARTICLE)
+        {
+            initPlayParticle(owner, L_LOC, EnumParticleTypes.TOTEM);
         }
         //---
 
         //撤退処理(Teleport)
-        final int RETREATPOTION_DURATION = 20; //RetreatPotionの効果時間。どっちみちLivingUpdateが停止されるので0でなければ値はなんでもいい。
+        final int L_RETREATPOTION_DURATION = 20;    //RetreatPotionの効果時間。どっちみちLivingUpdateが停止されるので0でなければ値はなんでもいい。
+        final List<Integer> L_LOC_RETREAT = this.getRetreatingPoint(owner, entity);
 
-        List<Integer> retreatLoc = this.getRetreatingPoint(owner, entity);
-
-        if (entity.dimension == retreatLoc.get(0)) {
-            entity.setPosition(retreatLoc.get(1), retreatLoc.get(2), retreatLoc.get(3));
+        if (entity.dimension == L_LOC_RETREAT.get(0))
+        {
+            entity.setPosition(L_LOC_RETREAT.get(1), L_LOC_RETREAT.get(2), L_LOC_RETREAT.get(3));
 
             //LivingUpdate停止用のポーション効果
-            if (DO_APPLYRETREATPOTION) {
-                entity.addPotionEffect(new PotionEffect(retreatPotion, RETREATPOTION_DURATION, 1));
+            if (DO_APPLYRETREATPOTION)
+            {
+                entity.addPotionEffect(new PotionEffect(f_retreatPotion, L_RETREATPOTION_DURATION, 1));
             }
-            else {
+            else
+            {
                 //LivingUpdateを停止しない場合はこの時点でEntityを初期化する。
                 resetEntityStatus(entity);
             }
         }
-        else {
+        else
+        {
             //Dimentionを、getRetreatingPointの返り値と等しくない場合は変更する。
-            entity.changeDimension(retreatLoc.get(0),
-                    new RetreatTeleporter(retreatLoc.get(1), retreatLoc.get(2), retreatLoc.get(3),
-                            DO_APPLYRETREATPOTION, RETREATPOTION_DURATION, retreatPotion));
+            entity.changeDimension(L_LOC_RETREAT.get(0),
+                    new RetreatTeleporter(L_LOC_RETREAT.get(1), L_LOC_RETREAT.get(2), L_LOC_RETREAT.get(3),
+                            DO_APPLYRETREATPOTION, L_RETREATPOTION_DURATION, f_retreatPotion));
         }
         //---
     }
 
 
 
-    //撤退したpetの状態を初期化する関数
-    public static void resetEntityStatus(EntityLivingBase entity) { //Entity撤退後の処理
-
+    //Entity撤退後にpetの状態を初期化する関数
+    public static void resetEntityStatus(EntityLivingBase entity)
+    {
         // 回復と消火とポーション効果と慣性を削除
         float retreatHealth = (float) Math.ceil(entity.getMaxHealth() * HEALING_PERCENTAGE);
-        if (retreatHealth < 1.0f) retreatHealth = 1.0f;
+        if (retreatHealth < 1.0f)
+        {
+            retreatHealth = 1.0f;
+        }
         entity.setHealth(retreatHealth);
 
         entity.extinguish();
@@ -355,16 +415,21 @@ public class RetreatMain {
         //---
 
         //演出・リスキル防止用ポーション効果
-        if (DO_APPLYPOTION) {
-            List<PotionEffect> pEffects = new ArrayList<>(); //初期化して、ポーション効果を配列に格納する。
-            pEffects.add(new PotionEffect(MobEffects.RESISTANCE, 60, 5));
-            pEffects.add(new PotionEffect(MobEffects.INVISIBILITY, 2, 1));
-            if (TOTEM_HARDRECIPE_REGENERATION) {
-                if (entity.getTags().contains(HARD_TAG)) {
-                    pEffects.add(new PotionEffect(MobEffects.REGENERATION, 600, 2));
+        if (DO_APPLYPOTION)
+        {
+            final List<PotionEffect> L_POTION_EFFECTS = new ArrayList<>(); //初期化して、ポーション効果を配列に格納する。
+
+            L_POTION_EFFECTS.add(new PotionEffect(MobEffects.RESISTANCE, 60, 5));
+            L_POTION_EFFECTS.add(new PotionEffect(MobEffects.INVISIBILITY, 2, 1));
+            if (TOTEM_HARDRECIPE_REGENERATION)
+            {
+                if (entity.getTags().contains(HARD_TAG))
+                {
+                    L_POTION_EFFECTS.add(new PotionEffect(MobEffects.REGENERATION, 600, 2));
                 }
             }
-            for(PotionEffect p : pEffects) {
+            for(PotionEffect p : L_POTION_EFFECTS)
+            {
                 entity.addPotionEffect(p);
             }
         }
@@ -375,23 +440,32 @@ public class RetreatMain {
 
     //別Dimentionも検索範囲に含めて最適な撤退先を見つける関数
     @SuppressWarnings("ConstantConditions") //if (loc == null) {}に対して使用。
-    private List<Integer> getRetreatingPoint(EntityPlayer owner, Entity entity) { //最適な撤退先を見つける(Server Only)
-        int dim = DimensionManager.getProvider(entity.dimension).getRespawnDimension((EntityPlayerMP) owner); //entityのいるDimentionでownerが死亡した場合のRespawn先
-        BlockPos loc = owner.getBedLocation(dim); //DimentionID、dimにおけるownerのベッド
-        if (loc == null || DimensionManager.getWorld(dim).getBlockState(loc).getBlock() != Blocks.BED) {
-            loc = DimensionManager.getProvider(dim).getSpawnPoint(); //DimentionID、dimにおける初期リスポーン先(ベッドが存在しない場合)
+    private List<Integer> getRetreatingPoint(EntityPlayer owner, Entity entity)
+    {
+        //最適な撤退先を見つける(Server Only)
+        final int L_ID_DIm = DimensionManager.getProvider(entity.dimension).getRespawnDimension((EntityPlayerMP) owner); //entityのいるDimentionでownerが死亡した場合のRespawn先
+        BlockPos loc = owner.getBedLocation(L_ID_DIm);      //L_ID_DIMにおけるownerのベッド
+
+        if (loc == null || DimensionManager.getWorld(L_ID_DIm).getBlockState(loc).getBlock() != Blocks.BED)
+        {
+            //DimentionID、L_ID_DIMにおける初期リスポーン先(ベッドが存在しない場合)
+            loc = DimensionManager.getProvider(L_ID_DIm).getSpawnPoint();
         }
 
         //窒息防止処理
-        World world = DimensionManager.getWorld(dim);
-        while (!world.isAirBlock(loc)) { //locの位置にあるブロックがairになるまでループ
+        final World L_WORLD = DimensionManager.getWorld(L_ID_DIm);
+
+        //locの位置にあるブロックがairになるまでループ
+        while (!L_WORLD.isAirBlock(loc))
+        {
             loc = loc.up(1);
         }
-        loc = new BlockPos(loc.getX(), (loc.getY() + SPAWN_HEIGHT), loc.getZ()); //SPAWN_HEIGHT分Y座標を上げる
+        //SPAWN_HEIGHT分Y座標を上げる
+        loc = new BlockPos(loc.getX(), (loc.getY() + SPAWN_HEIGHT), loc.getZ());
         //---
 
         List<Integer> result = new ArrayList<>();
-        result.add(dim);
+        result.add(L_ID_DIm);
         result.add(loc.getX());
         result.add(loc.getY());
         result.add(loc.getZ());
@@ -402,7 +476,8 @@ public class RetreatMain {
 
     //Ownerとの距離がUPDATECANCEL_DISTANCEになるまでpetのLivingUpdateを停止する関数
     @SubscribeEvent
-    public void RetreatPotion_LELUE(LivingEvent.LivingUpdateEvent event) {
+    public void RetreatPotion_LELUE(LivingEvent.LivingUpdateEvent event)
+    {
         /*以下の条件を満たすEntityのUpdateを停止する。(ServerOnly)
         ・EntityLivingBaseを継承している
         ・ownerとの距離がUPDATECANCEL_DISTANCE以上
@@ -410,44 +485,58 @@ public class RetreatMain {
          */
         //また、UPDATECANCEL_DISTANCEよりもownerとの距離が縮まった場合、retreatPotionを除去する。
         if (!DO_APPLYRETREATPOTION) return;
-        final EntityLivingBase ENTITY = event.getEntityLiving();
-        final World WORLD = ENTITY.getEntityWorld();
-        if (WORLD.isRemote) return;
-        if (!ENTITY.isPotionActive(retreatPotion)) return;
+        final EntityLivingBase L_ENTITY = event.getEntityLiving();
+        final World L_WORLD = L_ENTITY.getEntityWorld();
+        if (L_WORLD.isRemote) return;
+        if (!L_ENTITY.isPotionActive(f_retreatPotion)) return;
 
         //ENTITYのTagからOwnerのUUIDを抜き取る
         UUID owner_uuid = null;
         EntityPlayer owner;
 
-        for(String t : ENTITY.getTags()) {
+        for(String t : L_ENTITY.getTags())
+        {
             if (!t.contains("@" + MOD_ID)) continue;
             owner_uuid = UUID.fromString(t.replace("@" + MOD_ID + "_", ""));
             break;
         }
-        if (owner_uuid == null) { //一度撤退したことがあるのにTagからUUIDを抜き取れない場合(例外)
+        //一度撤退したことがあるのにTagからUUIDを抜き取れない場合(例外)
+        if (owner_uuid == null)
+        {
             return;
         }
-        else { //UUIDを抜き取れた場合
-            owner = WORLD.getPlayerEntityByUUID(owner_uuid);
+        //UUIDを抜き取れた場合
+        else
+        {
+            owner = L_WORLD.getPlayerEntityByUUID(owner_uuid);
         }
         //---
 
-        if (owner == null) { //ownerがオフラインの場合
+        //ownerがオフラインの場合
+        if (owner == null)
+        {
             event.setCanceled(true);
         }
-        else if (ENTITY.getDistanceSq(owner) > (UPDATECANCEL_DISTANCE^2)) {
+        //ownerとの距離が十分近くない場合
+        else if (L_ENTITY.getDistanceSq(owner) > (UPDATECANCEL_DISTANCE^2))
+        {
             event.setCanceled(true);
         }
-        else { //UPDATECANCEL_DISTANCEよりもownerとpetの距離が縮まったとき
-            resetEntityStatus(ENTITY);
+        //UPDATECANCEL_DISTANCEよりもownerとpetの距離が縮まったとき
+        else
+        {
+            resetEntityStatus(L_ENTITY);
 
-            final Vec3d LOC = getEntityLoc(ENTITY);
+            final Vec3d L_LOc = getEntityLoc(L_ENTITY);
+
             //以下、演出再生
-            if (DO_PLAYSOUND) {
-                WORLD.playSound(null, LOC.x, LOC.y, LOC.z, SoundEvents.ENTITY_PLAYER_LEVELUP, SoundCategory.PLAYERS, 0.8f, 1.78f);
+            if (DO_PLAYSOUND)
+            {
+                L_WORLD.playSound(null, L_LOc.x, L_LOc.y, L_LOc.z, SoundEvents.ENTITY_PLAYER_LEVELUP, SoundCategory.PLAYERS, 0.8f, 1.78f);
             }
-            if (DO_PLAYPARTICLE) {
-                initPlayParticle(owner, LOC, EnumParticleTypes.VILLAGER_HAPPY);
+            if (DO_PLAYPARTICLE)
+            {
+                initPlayParticle(owner, L_LOc, EnumParticleTypes.VILLAGER_HAPPY);
             }
         }
     }
@@ -455,64 +544,78 @@ public class RetreatMain {
 
 
     //Particle生成関数
-    public static void initPlayParticle (EntityPlayer player, Vec3d loc, EnumParticleTypes pType) {
+    public static void initPlayParticle (EntityPlayer player, Vec3d loc, EnumParticleTypes pType)
+    {
         //わざわざPacketを使うのも面倒なのでサーバーからChatを送信してRPCを再現する。(ServerOnly)
         //座標に関しては、サーバーとクライアント間でズレがあるので、プレイヤーを原点とした差を渡す。
-        if (player.getEntityWorld().isRemote) return;
+        if (!player.getEntityWorld().isRemote)
+        {
+            final int L_DIM = player.dimension;
+            final Vec3d L_LOC_P = getEntityLoc(player);
 
-        final int DIM = player.dimension;
-        final Vec3d PLOC = getEntityLoc(player);
+            String message = "@" + MOD_ID;
+            message += "_" + player.getUniqueID();
+            message += "_" + (L_LOC_P.x - loc.x);
+            message += "_" + (L_LOC_P.y - loc.y);
+            message += "_" + (L_LOC_P.z - loc.z);
+            message += "_" + pType.getParticleID();
 
-        String message = "@" + MOD_ID;
-        message += "_" + player.getUniqueID();
-        message += "_" + (PLOC.x - loc.x);
-        message += "_" + (PLOC.y - loc.y);
-        message += "_" + (PLOC.z - loc.z);
-        message += "_" + pType.getParticleID();
+            //dimentionが一致する全PlayerにChatmessageを送信する。
+            final PlayerList _L_PLAYERLIST = FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList();
 
-        //dimentionが一致する全PlayerにChatmessageを送信する。
-        final PlayerList PLAYERLIST = FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList();
-        for (EntityPlayerMP p : PLAYERLIST.getPlayers()) {
-            if (p.dimension == DIM) {
-                p.sendMessage(new TextComponentString(message));
+            for (EntityPlayerMP _p : _L_PLAYERLIST.getPlayers())
+            {
+                if (_p.dimension == L_DIM)
+                {
+                    _p.sendMessage(new TextComponentString(message));
+                }
             }
         }
     }
+    //チャットメッセージを受け取った時のイベント
     @SubscribeEvent
     @SideOnly(Side.CLIENT)
-    public void playParticle(ClientChatReceivedEvent event) {
+    public void playParticle(ClientChatReceivedEvent event)
+    {
         //Chat内容に"@MOD_ID"を含む場合(ClientOnly)
-        final String MSG = event.getMessage().getUnformattedText();
-        if (MSG.contains("@" + MOD_ID)) {
+        final String L_MSG = event.getMessage().getUnformattedText();
+
+        if (L_MSG.contains("@" + MOD_ID))
+        {
             event.setCanceled(true);
 
             //Chatmessageを分解して、　定数を定義する。
-            final List<String> SPLIT = Arrays.asList(MSG.split("_"));
+            final List<String> L_SPLIT = Arrays.asList(L_MSG.split("_"));
 
-            final World WORLD = Minecraft.getMinecraft().world;
-            final EntityPlayer PLAYER = WORLD.getPlayerEntityByUUID(UUID.fromString(SPLIT.get(1)));
-            assert PLAYER != null;
-            final Vec3d PLOC = getEntityLoc(PLAYER);
-            final Vec3d LOC = new Vec3d(
-                    PLOC.x - Double.parseDouble(SPLIT.get(2)),
-                    PLOC.y - Double.parseDouble(SPLIT.get(3)),
-                    PLOC.z - Double.parseDouble(SPLIT.get(4)));
-            final EnumParticleTypes PTYPE = EnumParticleTypes.getParticleFromId(Integer.parseInt(SPLIT.get(5)));
+            final World L_WORLD = Minecraft.getMinecraft().world;
+            final EntityPlayer L_PLAYER = L_WORLD.getPlayerEntityByUUID(UUID.fromString(L_SPLIT.get(1)));
+            assert L_PLAYER != null;
+            final Vec3d L_LOC_P = getEntityLoc(L_PLAYER);
+            final Vec3d L_LOC_EFFECT = new Vec3d(
+                    L_LOC_P.x - Double.parseDouble(L_SPLIT.get(2)),
+                    L_LOC_P.y - Double.parseDouble(L_SPLIT.get(3)),
+                    L_LOC_P.z - Double.parseDouble(L_SPLIT.get(4)));
+            final EnumParticleTypes L_TYPE_EFFECT = EnumParticleTypes.getParticleFromId(Integer.parseInt(L_SPLIT.get(5)));
             //---
 
             //Totemとそれ以外のParticleの生成数を指定
-            final int PARTICLECOUNT_TOTEM = 60;
-            final int PARTICLECOUNT_OTHER = 6;
+            final int L_PARTICLECOUNT_TOTEM = 60;
+            final int L_PARTICLECOUNT_OTHER = 6;
 
             //Particle再生
-            assert PTYPE != null;
-            if (PTYPE == EnumParticleTypes.TOTEM) {
-                for (int i = 0; i < PARTICLECOUNT_TOTEM; i++) {
-                    WORLD.spawnParticle(PTYPE, LOC.x, LOC.y + 0.5, LOC.z, randomVec(i - 1), (Math.abs(randomVec(i)) * 1.75), randomVec(i + 2));
+            assert L_TYPE_EFFECT != null;
+            if (L_TYPE_EFFECT == EnumParticleTypes.TOTEM)
+            {
+                for (int i = 0; i < L_PARTICLECOUNT_TOTEM; i++)
+                {
+                    L_WORLD.spawnParticle(L_TYPE_EFFECT, L_LOC_EFFECT.x, L_LOC_EFFECT.y + 0.5, L_LOC_EFFECT.z, randomVec(i - 1), (Math.abs(randomVec(i)) * 1.75), randomVec(i + 2));
                 }
-            } else {
-                for (int i = 0; i < PARTICLECOUNT_OTHER; i++) {
-                    WORLD.spawnParticle(PTYPE, LOC.x + (randomVec(i) * 2), LOC.y + 0.5 + (randomVec(i + 1) * 2), LOC.z + (randomVec(i + 2) * 2), 0, 0, 0);
+            }
+            else
+            {
+                for (int i = 0; i < L_PARTICLECOUNT_OTHER; i++)
+                {
+                    L_WORLD.spawnParticle(L_TYPE_EFFECT, L_LOC_EFFECT.x + (randomVec(i) * 2), L_LOC_EFFECT.y + 0.5 + (randomVec(i + 1) * 2), L_LOC_EFFECT.z + (randomVec(i + 2) * 2), 0, 0, 0);
                 }
             }
         }
