@@ -1,0 +1,9 @@
+﻿
+item.totem_of_retreat_normal.name=撤退のトーテム
+item.totem_of_retreat_hard.name=精巧な撤退のトーテム
+item.totem_of_revoke.name=取り消しのトーテム
+item.pet_command_rod.name=ペット用指揮棒
+item.pet_transfer_rod.name=ペット用転送指揮棒
+item.pet_retreat_rod.name=ペット用撤退指揮棒
+effect.petcommandrodpotion=ペット用指揮棒
+effect.pettransferrodpotion=ペット用転送指揮棒

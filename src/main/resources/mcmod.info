@@ -1,0 +1,16 @@
+[
+{
+  "modid": "petsretreat",
+  "name": "PetsRetreat",
+  "description": "Saves your pets.",
+  "version": "2.0.0",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["RiceBallSouls"],
+  "credits": "",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]

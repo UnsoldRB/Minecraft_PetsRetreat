@@ -1,0 +1,9 @@
+
+item.totem_of_retreat_normal.name=Totem of Retreat
+item.totem_of_retreat_hard.name=Elaborate Totem of Retreat
+item.totem_of_revoke.name=Totem of Revoke
+item.pet_command_rod.name=Pet Command Rod
+item.pet_transfer_rod.name=Pet Transfer Rod
+item.pet_retreat_rod.name=Pet Retreat Rod
+effect.petcommandrodpotion=Pet Command Rod
+effect.pettransferrodpotion=Pet Transfer Rod
