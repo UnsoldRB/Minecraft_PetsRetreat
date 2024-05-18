@@ -37,7 +37,7 @@ public class RetreatRecipes
         final Ingredient _R_DYE2 = Ingredient.fromStacks(new ItemStack(Items.DYE, 1, 13));
         final Ingredient _R_GOLDBLOCK = Ingredient.fromItem(Item.getItemFromBlock(Blocks.GOLD_BLOCK));
         final Ingredient _R_TOTEM = Ingredient.fromItem(Items.TOTEM_OF_UNDYING);
-        final Ingredient _R_DARKOAK_FENCE = Ingredient.fromItem(Item.getItemFromBlock(Blocks.DARK_OAK_FENCE));
+        final Ingredient _R_LOG2 = Ingredient.fromItem(Item.getItemFromBlock(Blocks.LOG2));
 
         if (RetreatConfig.c_Totem.enableNormalTotem_Recipe && RetreatConfig.c_Totem.enableNormalTotem)
         {
@@ -76,7 +76,7 @@ public class RetreatRecipes
             _recipe_input_revokeTotem.add(_R_DYE1);
             _recipe_input_revokeTotem.add(_R_AIR);
             _recipe_input_revokeTotem.add(_R_DYE2);
-            _recipe_input_revokeTotem.add(_R_DARKOAK_FENCE);
+            _recipe_input_revokeTotem.add(_R_LOG2);
             _recipe_input_revokeTotem.add(_R_DYE2);
             _recipe_input_revokeTotem.add(_R_AIR);
             _recipe_input_revokeTotem.add(_R_DYE1);
